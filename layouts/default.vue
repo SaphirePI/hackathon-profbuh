@@ -4,7 +4,7 @@
 
 <template>
   <header class="container mx-auto py-10 flex justify-between">
-    <div class="logo text-4xl font-black">Видео в текст</div>
+    <div class="logo text-4xl font-black">Панель редактора</div>
     <nav>
       <ul class="flex gap-x-3">
         <li>
