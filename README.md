@@ -1,10 +1,22 @@
-# Nuxt 3 Minimal Starter
+# Панель для редакторов
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+В этой панели вам предоставляется интерфейс для взаимодействия с административным сервером, который в свою очередь позаботится о том, чтоб передать ваш запрос в конвертер, но он не может вам этого пообещать :)
 
-## Setup
+# Предпросмотр
 
-Make sure to install the dependencies:
+## Внешний вид панели
+
+## Фильтры
+
+## Предупреждения
+
+## В процессе
+
+## Результат 🎉
+
+## Установка
+
+Убедитесь что скачали модули:
 
 ```bash
 # npm
@@ -17,9 +29,9 @@ pnpm install
 yarn install
 ```
 
-## Development Server
+## Для разработки
 
-Start the development server on `http://localhost:3000`:
+Запускает сайт на `http://localhost:3000`:
 
 ```bash
 # npm
@@ -34,7 +46,7 @@ yarn dev
 
 ## Production
 
-Build the application for production:
+Билдит приложение для продакшена:
 
 ```bash
 # npm
@@ -47,7 +59,7 @@ pnpm run build
 yarn build
 ```
 
-Locally preview production build:
+Предпросмотр продакшена после билда:
 
 ```bash
 # npm
@@ -59,8 +71,3 @@ pnpm run preview
 # yarn
 yarn preview
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-#   h a c k a t h o n - p r o f b u h 
- 
- 
