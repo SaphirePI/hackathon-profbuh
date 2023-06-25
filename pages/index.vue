@@ -1,34 +1,51 @@
 <script setup>
-const isWorking = ref(false);
+const isWorking = ref(true);
 
-const numberOfParagraphs = ref(5);
+const numberOfParagraphs = ref(3);
+const numberOfPhotos = ref(3);
+
 const videoURL = ref(null);
-const postLanguage = ref('ru');
 const force = ref(false);
+const imageBehavior = ref('uniform');
+const imageFormat = ref('imgur')
 
 const article = ref(null);
 const isPending = ref(false);
 const _error = ref(null);
 
+const fromTime = ref(null);
+const toTime = ref(null);
+const timer = ref(0);
+
+let counter = null;
+
 const createPost = async (url) => {
   isPending.value = true;
   isWorking.value = true;
+
+  counter = setInterval(() => {
+      timer.value++;
+  }, 1000)
 
   const { data, pending, error, refresh } = await useFetch('http://localhost:1337/api/articles/createBetterArticle', {
     method: 'GET',
     query: {
       link: videoURL.value,
       pages: numberOfParagraphs.value,
-      force: force.value
+      force: force.value,
+      from: fromTime.value,
+      to: toTime.value,
+      images: numberOfPhotos.value,
+      images_alg: imageBehavior.value
     }
   })
   isPending.value = false;
 
   article.value = data.value;
   _error.value = error.value
-  
 
-  console.log(data)
+  timer.value = 0;
+  clearInterval(counter);
 }
 </script>
 
@@ -36,25 +53,72 @@ const createPost = async (url) => {
   <div class="container mx-auto">
     <div :class="{ 'splash': !isWorking }">
       <h4 class="app-title">{{ isPending ? 'Работа над видео в процессе..' : 'Вставьте ссылку на ваше видео' }}</h4>
-      <div class="app-container">
-        <input type="text" placeholder="https://www.youtube.com/watch?v=CJ1piq6a4HU" class="app-input"
-          v-model="videoURL" />
-        <select class="app-select" v-model="force">
-          <option disabled>Вариант сбора звука</option>
-          <option selected value="false">Предпочитать субтитры</option>
-          <option value="true">Форсировать Whisper AI</option>
-        </select>
-        <button class="app-button" @click="createPost">Создать статью по видео</button>
+      <div class="join mt-2">
+        <div class="join-item">
+          <div class="app-container rubik">
+            <input type="text" placeholder="https://www.youtube.com/watch?v=CJ1piq6a4HU" class="app-input"
+                   v-model="videoURL" />
+            <select class="app-select !w-60" v-model="imageFormat">
+              <option disabled>Вариант сохранения картинок</option>
+              <option selected value="imgur">Облако Imgur</option>
+              <option value="base64">Кодировать Base64</option>
+            </select>
+            <select class="app-select !w-60" v-model="force">
+              <option disabled>Вариант сбора звука</option>
+              <option selected value="false">Субтитры</option>
+              <option value="true">Whisper AI</option>
+            </select>
+            <select class="app-select !w-60" v-model="imageBehavior">
+              <option disabled>Вариант сбора фото</option>
+              <option selected value="uniform">Универсальный</option>
+              <option value="similarity">Длительный показ темы</option>
+              <option value="circle_rectangle">Содержательность</option>
+            </select>
+          </div>
+          <div class="second-container join w-full -mt-1">
+            <input type="text" class="input input-bordered input-primary focus:outline-0 w-2/6 text-center" readonly value="Начало видео">
+            <input type="text" name="from" placeholder="00:00:00" class="app-input" v-model="fromTime">
+            <input type="text" class="input input-bordered input-primary focus:outline-0 w-2/6 text-center" readonly value="Конец видео">
+            <input type="text" name="to" placeholder="00:12:30" class="app-input" v-model="toTime">
+          </div>
+        </div>
+        <div class="join-item">
+          <button class="app-button !h-full w-72" @click="createPost">Создать статью по видео</button>
+        </div>
       </div>
-      <div class="app-slider">
-        <input type="range" min="2" max="15" class="app-range" step="1" v-model="numberOfParagraphs" />
-        <div class="w-full flex justify-between text-xs">
-          <span v-for="i in 14">{{ i + 1 }}</span>
+
+
+
+      <div class="sliders mt-5 flex gap-x-16 w-full">
+        <div class="app-slider w-full">
+          <span class="text-2xl font-normal">Количество параграфов</span>
+          <input type="range" min="2" max="15" class="app-range mt-2" step="1" v-model="numberOfParagraphs" />
+          <div class="w-full flex justify-between text-xs mb-2">
+            <span v-for="i in 14">{{ i + 1 }}</span>
+          </div>
+          <Transition>
+            <small class="text-warning rubik" v-if="numberOfParagraphs > 4">Большое количество параграфов может испортить ответ.<br>Придерживайтесь 1 параграфа на 5 минут видео.</small>
+          </Transition>
+        </div>
+
+        <div class="app-slider w-full">
+          <span class="text-2xl font-normal">Количество фото на параграф</span>
+          <input type="range" min="1" max="10" class="app-range mt-2" step="1" v-model="numberOfPhotos" />
+          <div class="w-full flex justify-between text-xs">
+            <span v-for="i in 10">{{ i }}</span>
+          </div>
+          <Transition>
+            <small class="text-warning rubik" v-if="numberOfPhotos > 5">Каждое фото добавляет немного времени к загрузке ответа.</small>
+          </Transition>
         </div>
       </div>
       <div class="loader mt-12 h-96 w-full grid place-content-center bg-gray-200 border-2 border-primary/20 rounded-3xl"
         v-if="isPending">
-        <span class="loading loading-bars loading-lg"></span>
+        <div class="flex flex-col items-center">
+          <span class="loading loading-bars loading-lg"></span>
+          <span class="mt-2 text-xl rubik">Статья создается...</span>
+          <span class="mt-2 text-xl rubik">{{timer > 60 ? `${Math.floor(timer / 60)} минут ${timer - (Math.floor(timer / 60)) * 60} сек` : `${timer} сек.`}}</span>
+        </div>
       </div>
       <div class="result mt-12" v-if="!isPending && (article || _error)">
         <div v-if="!_error && article.title">
@@ -65,10 +129,10 @@ const createPost = async (url) => {
                 <h2 class="text-3xl">{{ topic.title }}</h2><small class="text-md badge badge-primary py-4">{{
                   topic.start }} -> {{ topic.end }}</small>
               </div>
-              <p class="text-xl mt-4" v-html="topic.paragraphs.replaceAll('\n', '<br>')"></p>
+              <p class="text-xl mt-4" v-html="topic?.paragraphs ? topic.paragraphs.replaceAll('\n', '<br>') : ':<'"></p>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-                <img v-for="image in topic.images" :src="'data:image/png;base64,' + image" class="object-cover mt-4" style="width: 500px;">
+                <img v-for="image in topic.images" :src="image" class="object-cover mt-4" style="width: 500px;">
               </div>
             </div>
           </div>
@@ -98,10 +162,9 @@ const createPost = async (url) => {
   }
 
   .app-container {
-    @apply join w-full mt-2;
+    @apply join w-full;
   }
   .splash .app-container {
-    @apply mt-4;
   }
 
   .app-input {
@@ -112,7 +175,7 @@ const createPost = async (url) => {
   }
 
   .app-button {
-    @apply btn btn-primary join-item focus:outline-0 rounded-l-none;
+    @apply btn btn-primary focus:outline-0 rounded-l-none;
   }
   .splash .app-button {
     @apply btn-lg
@@ -125,15 +188,6 @@ const createPost = async (url) => {
     @apply select-lg;
   }
 
-
-  .app-slider {
-    @apply mt-2;
-  }
-
-  .splash .app-slider {
-    @apply mt-4;
-  }
-
   .app-range {
     @apply range range-xs;
   }
@@ -141,4 +195,16 @@ const createPost = async (url) => {
   .splash .app-range {
     @apply range-md;
   }
+
+ /* we will explain what these classes do next! */
+ .v-enter-active,
+ .v-leave-active {
+   transition: 0.5s ease;
+ }
+
+ .v-enter-from,
+ .v-leave-to {
+   transform: translateX(20px);
+   opacity: 0;
+ }
   </style>
